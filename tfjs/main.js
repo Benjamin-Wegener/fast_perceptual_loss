@@ -340,7 +340,7 @@ async function initializeModels() {
     logQueue.put("Loading VGG19 as feature extractor...");
     
     // VGG19 URL - TensorFlow.js pre-trained model
-    featureExtractor = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/vgg19_imagenet/model.json');
+    featureExtractor = await tf.loadLayersModel('VGG19/model/model.json');
     
     // Create a sub-model with just the feature extraction layers
     // VGG19 typically uses block4_conv2 or block5_conv2 for perceptual features
