@@ -1,6 +1,3 @@
-[submodule "tfjs/Set14"]
-	path = tfjs/Set14
+[submodule "Set14"]
+	path = Set14
 	url = https://github.com/Benjamin-Wegener/Set14
-[submodule "tfjs/VGG19"]
-	path = tfjs/VGG19
-	url = https://github.com/Benjamin-Wegener/tfjs_vgg19_imagenet
