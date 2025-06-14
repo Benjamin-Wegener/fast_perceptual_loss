@@ -336,11 +336,10 @@ async function runTraining() {
 
         // 2. If not loaded from IndexedDB, try to load from local files (downloads location, i.e., same folder as index.html)
         if (!loadedSuccessfully) {
-            updateStatus('Attempting to load lightweight feature extractor from local files (model.json in root)...');
+            updateStatus('Attempting to load lightweight feature extractor from local files (./lightweight_feature_extractor_model/)...');
             try {
-                // Assume the downloaded model files are in the same directory (e.g., 'model.json')
-                // This path refers to the 'model.json' file in the root of the serving directory
-                const loadedModel = await tf.loadLayersModel('./model.json'); 
+                // This path now refers to the 'lightweight_feature_extractor_model.json' file inside the specified folder
+                const loadedModel = await tf.loadLayersModel('./lightweight_feature_extractor_model/lightweight_feature_extractor_model.json'); 
                 if (loadedModel.input.shape[1] === IMAGE_SIZE && loadedModel.input.shape[2] === IMAGE_SIZE) {
                     lightweightFeatureExtractor = loadedModel;
                     updateStatus('Lightweight feature extractor loaded successfully from local files.');
@@ -649,7 +648,8 @@ async function loadModelFromFile(event) {
                 // It might be safer to load on CPU first to prevent backend-specific issues
                 await tf.setBackend('cpu');
                 if (lightweightFeatureExtractor) lightweightFeatureExtractor.dispose(); 
-                lightweightFeatureExtractor = await tf.loadLayersModel(tf.io.browserFiles(files));
+                // Convert FileList to an Array before passing to tf.io.browserFiles
+                lightweightFeatureExtractor = await tf.loadLayersModel(tf.io.browserFiles(Array.from(files)));
                 updateStatus('Lightweight model loaded from files successfully.');
                 lightweightFeatureExtractor.summary();
                 logMemoryUsage(tf); 
