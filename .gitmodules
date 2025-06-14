@@ -1,3 +1,6 @@
 [submodule "Set14"]
 	path = Set14
 	url = https://github.com/Benjamin-Wegener/Set14
+[submodule "tfjs_vgg19_imagenet-master"]
+	path = tfjs_vgg19_imagenet-master
+	url = https://github.com/paulsp94/tfjs_vgg19_imagenet.git
