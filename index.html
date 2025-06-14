@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Perceptual Loss Training</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgpu@latest"></script>
+    <!-- Chart.js CDN for loss curve visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --spacing-xxs: 2px; /* Even smaller spacing */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --card-padding: 10px; 
+            --body-padding: 6px; 
+        }
+
+        html {
+            height: 100%;
+            overflow: hidden; /* Hide HTML scrollbars */
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: var(--body-padding);
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh; /* Ensure body takes full viewport height */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+            overflow: hidden; /* Hide body scrollbars */
+            /* Removed flex-grow from body - let the container handle stretching */
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: var(--spacing-xs); /* Very tight margin */
+            font-size: 1.4em; 
+            text-align: center;
+            flex-shrink: 0; 
+        }
+
+        p {
+            text-align: center;
+            max-width: 800px;
+            margin-top: 0;
+            margin-bottom: var(--spacing-xs); /* Very tight margin */
+            line-height: 1.2; 
+            font-size: 0.8em; /* Smaller font */
+            flex-shrink: 0; 
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm); /* Spacing between main sections */
+            background-color: #ffffff;
+            padding: var(--spacing-md);
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            flex: 1; /* Allow container to grow and take available space */
+            min-height: 0; /* Important for flex-grow to work correctly */
+        }
+
+        .section-card {
+            background-color: #ffffff;
+            padding: var(--card-padding);
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* Important for flex items to shrink */
+            min-width: 0; /* Important for flex items to shrink their content */
+        }
+
+        /* Adjusted flex-grow values to prioritize space for samples */
+        #status-and-controls {
+            flex-shrink: 0; /* Prevent this section from shrinking */
+            gap: var(--spacing-sm); 
+        }
+
+        #loss-chart-container { 
+            flex: 0.6; /* Give chart less relative space */
+            justify-content: flex-start;
+            overflow: hidden;
+        }
+
+        #sample-images { 
+            flex: 1.4; /* Give sample images more relative space */
+            padding: var(--spacing-sm);
+            background-color: #f9f9f9;
+            border: none;
+            gap: var(--spacing-sm); /* Gap between p and sample-grid */
+        }
+
+        .section-card h3 {
+            color: #34495e;
+            margin-top: 0;
+            margin-bottom: var(--spacing-xs);
+            font-size: 1em;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: var(--spacing-xs);
+            flex-shrink: 0; 
+        }
+
+        /* Status and Controls Section continued */
+        #status-container { 
+            margin-bottom: 0;
+            padding: var(--spacing-xs); 
+            line-height: 1.3;
+            font-size: 0.7em; /* Even smaller font */
+        }
+
+        #training-time, #epoch-time, #loss-status { 
+            font-weight: bold; 
+            color: #2980b9;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap; 
+            gap: var(--spacing-xs);
+            align-items: center;
+        }
+
+        .controls button { 
+            padding: 4px 7px; /* Even smaller padding */
+            border-radius: 3px;
+            font-size: 0.75em; /* Smaller font */
+        }
+        
+        .controls label {
+            font-weight: bold;
+            margin-left: var(--spacing-xs);
+            font-size: 0.7em; /* Smaller font */
+        }
+        input[type="file"] { 
+            padding: 2px; /* Minimal padding */
+            border-radius: 3px;
+            font-size: 0.7em;
+        }
+
+        /* Chart Section continued */
+        #lossChart {
+            max-width: 100%;
+            max-height: 100%; 
+            display: block; 
+            margin-top: var(--spacing-xs); /* Reduced margin-top */
+        }
+
+        /* Sample Images Section continued */
+        #sample-images p {
+            margin-bottom: var(--spacing-xs); 
+            font-size: 0.65em; /* Smallest font for description */
+            line-height: 1.0; /* Very tight line height */
+            flex-shrink: 0;
+        }
+        #sample-images .sample-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: var(--spacing-sm); 
+            overflow-y: auto; /* INTERNAL scrolling if content overflows THIS grid */
+            flex: 1; /* Allows the grid itself to consume remaining space */
+            min-height: 0; 
+        }
+        #sample-images div { /* Individual sample cards */
+            margin: 0; 
+            border: 1px solid #e0e0e0; 
+            padding: var(--spacing-xs); 
+            text-align: center; 
+            flex-basis: 220px; /* Ideal width for samples */
+            flex-grow: 1; 
+            flex-shrink: 1; 
+            border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            box-sizing: border-box; 
+            min-width: 0; /* Important for content to shrink */
+        }
+        #sample-images div h4 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-xs);
+            font-size: 0.75em; /* Smaller font */
+            color: #555;
+        }
+        #sample-images canvas {
+            display: block; 
+            margin: 0 auto; 
+            width: 100%; 
+            height: auto; 
+            border: none; 
+            border-radius: 3px;
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 900px) {
+            #sample-images div {
+                flex-basis: 180px; /* Adjust basis for slightly smaller screens */
+            }
+        }
+        @media (max-width: 768px) {
+            :root {
+                --body-padding: 4px;
+                --spacing-xs: 3px;
+                --spacing-sm: 6px;
+                --card-padding: 6px;
+            }
+            body { padding: var(--body-padding); }
+            h2 { font-size: 1.2em; margin-bottom: var(--spacing-xxs); } 
+            p { font-size: 0.75em; margin-bottom: var(--spacing-xxs); } 
+            .container { padding: var(--spacing-sm); gap: var(--spacing-xs); }
+            .section-card { padding: var(--card-padding); }
+            .section-card h3 { font-size: 0.9em; margin-bottom: var(--spacing-xxs); } 
+            .controls button, .controls label, input[type="file"] { 
+                font-size: 0.7em; 
+                padding: 3px 5px; 
+            }
+            #status-container { font-size: 0.65em; padding: var(--spacing-xs); line-height: 1.2; }
+            input[type="file"] { padding: 2px; }
+            #lossChart { margin-top: var(--spacing-xs); }
+            #sample-images p { font-size: 0.6em; margin-bottom: var(--spacing-xs); } 
+            #sample-images div { 
+                width: 100%; 
+                max-width: none;
+                flex-basis: auto; /* Reset flex-basis on mobile for full width */
+                padding: var(--spacing-xs);
+            }
+            #sample-images div h4 { font-size: 0.7em; margin-bottom: var(--spacing-xs); }
+        }
+    </style>
+</head>
+<body>
+    <h2>Lightweight Perceptual Feature Extractor Training (Browser)</h2>
+    <p>This application trains a lightweight neural network to mimic the feature extraction capabilities of the VGG19 model's 'block2_conv2' layer. The trained lightweight model can then be used for faster perceptual loss calculations in other applications.</p>
+
+    <div class="container">
+        <div id="status-and-controls" class="section-card">
+            <h3>Application Status & Controls:</h3>
+            <div id="status-container">
+                <p id="status">Status: Loading...</p>
+                <p id="epoch-status">Epoch: N/A</p>
+                <p id="loss-status">Loss: N/A</p>
+                <p>Epoch Time: <span id="epoch-time">N/A</span></p>
+                <p>Total Training Time: <span id="training-time">N/A</span></p>
+            </div>
+            <div class="controls">
+                <button id="start-training-btn">Start Training</button>
+                <button id="stop-training-btn" disabled>Stop Training</button> <!-- Added Stop Training Button -->
+                <button id="save-model-btn">Save Lightweight Model (Download)</button>
+                <label for="load-model-input">Load Lightweight Model:</label>
+                <input type="file" id="load-model-input" webkitdirectory directory multiple>
+                <button id="delete-model-btn">Delete Lightweight Model</button>
+            </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div id="loss-chart-container" class="section-card">
+            <h3>Training Loss Curve:</h3>
+            <canvas id="lossChart"></canvas>
+        </div>
+
+        <!-- Sample Images section -->
+        <div id="sample-images" class="section-card">
+            <h3>Sample VGG Feature Visualizations:</h3>
+            <p>Visualizations of the Original VGG Features, the Lightweight Model's Generated Features, and a Heatmap of their Difference will appear here after each epoch.</p>
+            <div class="sample-grid">
+                <!-- Sample images will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Ensure main.js is loaded AFTER all HTML elements it interacts with -->
+    <script type="module" src="main.js"></script>
+
+</body>
+</html>
