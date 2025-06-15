@@ -21,7 +21,7 @@ import {
 
 
 // Configuration
-const EPOCHS = 3; 
+const EPOCHS = 250; 
 const BATCH_SIZE = 4; 
 const LEARNING_RATE = 1e-4;
 const WEIGHT_DECAY = 1e-4; // Weight decay for L2 regularization
