@@ -23,13 +23,14 @@
 ### Setup
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/lightweight-perceptual-extractor.git
-cd lightweight-perceptual-extractor
+git clone git clone --recurse-submodules https://github.com/Benjamin-Wegener/fast_perceptual_loss
+cd fast_perceptual_loss
 
-# Start a local server
-python -m http.server 8000
+# Start a local server (need python3 for that)
+start_webserver.bat (windows)
+./start_webserver.sh (linux)
 
-# Open in browser
+# Open in browser (FF nightly or Chrome Canary /w webgpu)
 open http://localhost:8000
 ```
 
