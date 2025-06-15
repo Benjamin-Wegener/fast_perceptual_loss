@@ -4,7 +4,7 @@
 [![WebGPU](https://img.shields.io/badge/WebGPU-005CFF?style=flat&logo=webgl&logoColor=white)](https://webgpu.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> Train a compact neural network in your browser to mimic VGG19's feature extraction capabilities. Perfect for style transfer, super-resolution, and image generation tasks without the computational overhead.
+> Train a compact neural network in your browser to mimic VGG19's feature extraction capabilities. Perfect for style transfer, super-resolution, and image generation tasks without the computational overhead. Shoul run for 250 Epochs on WebGPU enabled Browser to achive MSE loss of ~3.000
 
 ## ✨ Features
 
