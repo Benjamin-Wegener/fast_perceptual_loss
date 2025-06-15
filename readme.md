@@ -23,7 +23,7 @@
 ### Setup
 ```bash
 # Clone the repository
-git clone git clone --recurse-submodules https://github.com/Benjamin-Wegener/fast_perceptual_loss
+git clone --recurse-submodules https://github.com/Benjamin-Wegener/fast_perceptual_loss
 cd fast_perceptual_loss
 
 # Start a local server (need python3 for that)
